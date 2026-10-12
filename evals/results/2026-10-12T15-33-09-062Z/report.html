@@ -1,0 +1,2188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Eval report — prouxaudit v0.1.0</title>
+</head>
+<body>
+<style>
+:root{--plane:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink-2:#52514e;--ink-3:#6b6a64;--hairline:rgba(11,11,11,.10);--grid:#e1e0d9;--inset:rgba(11,11,11,.04);--accent:#2a78d6;--base-fill:#6b6a64;--delta-good:#006300;--good:#067d06;--warning:#8a6100;--critical:#d03b3b;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{--plane:#0d0d0d;--surface:#1a1a19;--ink:#ffffff;--ink-2:#c3c2b7;--ink-3:#898781;--hairline:rgba(255,255,255,.10);--grid:#2c2c2a;--inset:rgba(255,255,255,.05);--accent:#3987e5;--base-fill:#898781;--delta-good:#0ca30c;--good:#0ca30c;--warning:#fab219;--critical:#e06c6c;color-scheme:dark}}
+:root[data-theme="dark"]{--plane:#0d0d0d;--surface:#1a1a19;--ink:#ffffff;--ink-2:#c3c2b7;--ink-3:#898781;--hairline:rgba(255,255,255,.10);--grid:#2c2c2a;--inset:rgba(255,255,255,.05);--accent:#3987e5;--base-fill:#898781;--delta-good:#0ca30c;--good:#0ca30c;--warning:#fab219;--critical:#e06c6c;color-scheme:dark}
+:root[data-theme="light"]{--plane:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink-2:#52514e;--ink-3:#6b6a64;--hairline:rgba(11,11,11,.10);--grid:#e1e0d9;--inset:rgba(11,11,11,.04);--accent:#2a78d6;--base-fill:#6b6a64;--delta-good:#006300;--good:#067d06;--warning:#8a6100;--critical:#d03b3b;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);
+  font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:880px;margin:0 auto;padding:40px 24px 64px;display:flex;flex-direction:column;gap:20px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+header h1{margin:2px 0 0;font-size:24px;font-weight:600;line-height:1.25;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;color:var(--ink-2);font-size:13px}
+.meta .num{font-variant-numeric:tabular-nums lining-nums}
+.banner{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;
+  border:1px solid var(--hairline);background:var(--surface);font-size:13px}
+.banner .chip-warn{color:var(--warning);font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:4px}
+.tile .label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.tile .value{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums lining-nums;line-height:1.1}
+.tile.hero .value{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:48px}
+.tile .sub{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.tile .value.delta-pos{color:var(--delta-good)}
+.tile .value.delta-neg{color:var(--critical)}
+.toolbar{display:flex;gap:8px;justify-content:flex-end}
+.toolbar button{font:12px system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink-2);
+  background:var(--surface);border:1px solid var(--hairline);border-radius:6px;padding:4px 10px;cursor:pointer}
+.toolbar button:hover{color:var(--ink)}
+.toolbar button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.case{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:18px 20px;
+  display:flex;flex-direction:column;gap:10px}
+.case-regressed{border-left:3px solid var(--critical)}
+.verdict{margin:6px 0 0;font-size:15px}
+.verdict .delta{font-size:15px}
+.flag{font-size:11px;font-weight:600;color:var(--warning);white-space:nowrap}
+.star{color:var(--warning);font-size:.45em;vertical-align:super;line-height:0;cursor:help}
+.legend summary{cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.legend-list{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink-2)}
+.case-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.case-head h2{margin:0;font-size:16px;font-weight:600}
+.case-head .spacer{flex:1}
+.case-score{font-size:15px;font-weight:600}
+.mono{font:12px "SF Mono",ui-monospace,Menlo,Consolas,monospace}
+.num{font-variant-numeric:tabular-nums lining-nums}
+.muted{color:var(--ink-3);font-size:12px}
+.meter{display:inline-block;position:relative;width:120px;height:6px;border-radius:4px;background:var(--grid);
+  vertical-align:middle}
+.meter>span{display:block;height:100%;border-radius:4px;max-width:100%}
+.meter .tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink-3);border-radius:1px}
+.m-accent>span{background:var(--accent)}
+.m-base>span{background:var(--base-fill)}
+.delta{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.delta-pos{color:var(--delta-good)}
+.delta-neg{color:var(--critical)}
+.delta-zero{color:var(--ink-3)}
+details.section{border-top:1px solid var(--grid);padding-top:10px}
+details.section>summary{cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--ink-2);list-style-position:outside;margin-left:2px}
+details.section>summary:hover{color:var(--ink)}
+details.section[open]>summary{margin-bottom:8px}
+.md{display:flex;flex-direction:column;gap:8px;background:var(--inset);border-radius:8px;
+  padding:12px 14px;overflow-wrap:break-word}
+.md>:first-child{margin-top:0}
+.md h1,.md h2,.md h3,.md h4,.md h5,.md h6{margin:4px 0 0;font-size:1em;font-weight:600;line-height:1.3}
+.md p,.md ul,.md ol,.md blockquote,.md table,.md pre,.md hr{margin:0}
+.md ul,.md ol{display:flex;flex-direction:column;gap:4px;padding-left:20px}
+.md blockquote{border-left:2px solid var(--hairline);padding-left:10px;color:var(--ink-2)}
+.md :not(pre)>code{background:var(--inset);padding:1px 4px;border-radius:4px;
+  font:.92em "SF Mono",ui-monospace,Menlo,Consolas,monospace}
+.md pre{background:var(--inset);border:1px solid var(--hairline);padding:10px 12px;border-radius:6px;
+  overflow-x:auto;font:12px/1.5 "SF Mono",ui-monospace,Menlo,Consolas,monospace}
+.md pre code{background:none;padding:0;font:inherit}
+.md table{width:100%;border-collapse:collapse}
+.md th,.md td{padding:5px 8px;text-align:left;vertical-align:top;border-bottom:1px solid var(--grid)}
+.md th{font-weight:600;color:var(--ink-2)}
+.md a{color:var(--accent);text-decoration:none}
+.md a:hover{text-decoration:underline}
+.grader-def{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.grader-def+.grader-def{border-top:1px solid var(--grid)}
+.grader-def-head{display:flex;align-items:baseline;gap:8px}
+.grader-name{font:13px "SF Mono",ui-monospace,Menlo,Consolas,monospace;font-weight:600}
+.badge{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);
+  border:1px solid var(--hairline);border-radius:999px;padding:1px 8px}
+.config{display:flex;flex-direction:column;gap:2px;background:var(--inset);border-radius:8px;padding:10px 14px}
+.config code{font:12px "SF Mono",ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
+.arm{display:flex;flex-direction:column;gap:8px;padding:6px 0}
+.arm+.arm{border-top:1px dashed var(--grid);margin-top:4px;padding-top:12px}
+.arm-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.arm-label{font-size:13px;font-weight:600}
+.run{border:1px solid var(--grid);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.run-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.run-title{font-size:12px;font-weight:600;color:var(--ink-2)}
+.run-error .explanation{color:var(--ink-2)}
+.note{font-size:12px;color:var(--ink-2)}
+.graders{display:flex;flex-direction:column;gap:4px}
+details.grader{border-radius:6px}
+details.grader>summary{cursor:pointer;display:flex;align-items:baseline;gap:8px;padding:3px 4px;
+  border-radius:6px;list-style:none}
+details.grader>summary::-webkit-details-marker{display:none}
+details.grader>summary::before{content:'▸';font-size:10px;color:var(--ink-3);flex:none;
+  transition:transform .12s ease}
+details.grader[open]>summary::before{transform:rotate(90deg)}
+details.grader>summary:hover{background:var(--inset)}
+details.grader>summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.grader-body{padding:6px 8px 8px 24px;display:flex;flex-direction:column;gap:6px}
+.chip{font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.chip-pass{color:var(--good);border:1px solid currentColor}
+.chip-fail{color:var(--critical);border:1px solid currentColor}
+.chip.chip-warn{color:var(--warning);border:1px solid currentColor}
+.explanation{margin:0;font-size:13px;color:var(--ink-2);white-space:pre-wrap;overflow-wrap:break-word}
+.kv{display:flex;gap:8px;font-size:12px;color:var(--ink-3)}
+.votes{font-variant-numeric:tabular-nums;letter-spacing:.1em}
+pre.evidence{margin:0;background:var(--inset);border:1px solid var(--hairline);border-radius:6px;
+  padding:8px 10px;overflow-x:auto;max-height:320px;
+  font:12px/1.5 "SF Mono",ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:break-word}
+footer{color:var(--ink-3);font-size:12px;text-align:center;padding-top:8px}
+@media (prefers-reduced-motion:no-preference){
+  details.grader>summary,.toolbar button{transition:background .12s ease,color .12s ease}
+}
+@media (prefers-reduced-motion:reduce){
+  details.grader>summary::before{transition:none}
+}
+@media print{
+  :root,:root[data-theme="dark"],:root[data-theme="light"]{--plane:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink-2:#52514e;--ink-3:#6b6a64;--hairline:rgba(11,11,11,.10);--grid:#e1e0d9;--inset:rgba(11,11,11,.04);--accent:#2a78d6;--base-fill:#6b6a64;--delta-good:#006300;--good:#067d06;--warning:#8a6100;--critical:#d03b3b;color-scheme:light}
+  body{background:#fff}
+  .toolbar{display:none}
+  .case,.run,.grader-def{break-inside:avoid}
+  pre.evidence{max-height:none}
+}
+</style>
+<div class="wrap">
+<header>
+<div class="eyebrow">Plugin eval report</div>
+<h1>prouxaudit v0.1.0</h1>
+<p class="verdict">Plugin effect: <span class="delta delta-pos">↑ +63.3 pts</span> vs baseline — improved 5 · flat 0 · regressed 0 of 5 cases.</p>
+<div class="meta">
+<span class="mono">.</span>
+<span>Claude Code v2.1.296</span>
+<span class="num">2026-10-12 15:33 UTC</span>
+<span class="num">12m 40s</span>
+<span class="num">$3.05</span>
+<span class="num">30 runs</span>
+
+
+
+<span>judge default</span>
+<span class="num">threshold 100%</span>
+
+</div>
+</header>
+
+<section class="tiles">
+<div class="tile hero"><span class="label">Suite score · with plugin</span><span class="value">100%</span><span class="sub">mean of per-case scores</span></div>
+<div class="tile"><span class="label">Ablation Δ</span><span class="value num delta-pos">↑ +63.3</span><span class="sub">score points vs baseline, 5 of 5 cases</span></div>
+<div class="tile"><span class="label">Baseline score</span><span class="value num">36.7%</span><span class="sub">without the plugin</span></div>
+<div class="tile"><span class="label">Cases</span><span class="value num">5</span><span class="sub">5 of 5 ≥ 100% threshold</span></div>
+<div class="tile"><span class="label">Perfect runs</span><span class="value num">100%</span><span class="sub">runs where every grader passed</span></div>
+</section>
+<details class="section legend">
+<summary>How to read this report</summary>
+<ul class="legend-list">
+<li>A run's score is the weighted fraction of its graders that passed; a "perfect" run passed every grader.</li>
+<li>A case's score is the mean of its runs; a case passes when its score is at or above the 100% threshold (the tick on each case bar).</li>
+<li>The suite score is the mean of the per-case scores.</li>
+<li>Judge votes are independent samples of the LLM judge; the majority decides pass or fail.</li>
+<li>"With plugin" and "Baseline" runs are identical except for the plugin being loaded; Δ is the with-plugin score minus the baseline score.</li>
+
+</ul>
+</details>
+<div class="toolbar"><button type="button" data-act="expand">Expand all</button><button type="button" data-act="collapse">Collapse all</button></div>
+<article class="case" id="case-1">
+<div class="case-head">
+<h2>audit-from-url</h2>
+<span class="muted mono">evals\audit-from-url</span>
+<span class="spacer"></span>
+
+<span class="delta delta-pos">↑ +100.0 pts</span>
+<span class="muted">with plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span><i class="tick" style="left:100.0%"></i></span>
+<span class="num case-score">100%</span>
+</div>
+
+<details class="section" open>
+<summary>Results</summary>
+<section class="arm">
+<div class="arm-head">
+<span class="arm-label">With plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">100% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">6 turns · $0.10 · 15:33:10 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 2 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">skill-fired</span>  <span class="badge">plugin-fired indicator</span></summary>
+<div class="grader-body">
+<p class="explanation">Skill called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">start-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit@2 precedes mcp__plugin_prouxaudit_prouxaudit__get_ux_audit@3</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">started-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 1x (expected 1..1)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">The audit of https://prouxaudit.com finished. The service reused an earlier audit instead of running a new one; it reports the cached result as **172,800 seconds (about 2 days) old**. That doesn&apos;t match the result&apos;s own completion time of 2026-10-01 09:30 UTC, which is about 11 days ago. Either way, this is not a fresh run.
+
+**Score: 72/100.** The audit&apos;s overall view is &quot;Solid structure with a few clarity and accessibility gaps.&quot;
+
+## Main problems found
+
+1. **The main call-to-action doesn&apos;t stand out (high severity).** It looks the same as the 3 links within 80px of it. The audit recommends giving it one dominant button style.
+2. **The email field has no visible label (medium).** The newsletter input only has placeholder text, which disappears once someone starts typing. The audit recommends a label that stays visible.
+3. **Body text is hard to read (medium).** Grey text on white measured a contrast ratio of 3.2:1, below the recommended 4.5:1. The fix is to darken the text colour until it reaches at least 4.5:1.
+
+**What works:** the headline names the product and its audience above the fold, without scrolling.
+
+## What the audit covered
+- **Pages:** only the landing page (`https://prouxaudit.com/`). No logged-in pages were checked.
+- **Coverage:** medium (0.8). 8 of 10 areas were checked: 4 passed and 4 were flagged. The other 2 were skipped because only the landing page was captured, and the checkout flow wasn&apos;t checked.
+- **Confidence:** medium (0.7).
+- The audit says a clean result isn&apos;t justified, so pages it didn&apos;t capture could still have problems.
+
+I can get the shareable evidence report link, or turn these findings into a fix plan.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">6 turns · $0.10 · 15:33:32 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 2 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">skill-fired</span>  <span class="badge">plugin-fired indicator</span></summary>
+<div class="grader-body">
+<p class="explanation">Skill called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">start-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit@2 precedes mcp__plugin_prouxaudit_prouxaudit__get_ux_audit@3</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">started-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 1x (expected 1..1)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">ProUXAudit gave https://prouxaudit.com a score of **72/100**: &quot;Solid structure with a few clarity and accessibility gaps.&quot;
+
+**This was a reused earlier audit, not a fresh run.** The service reported a cache age of 172,800 seconds (2 days), but the result says it was completed on 2026-10-01, which is 11 days before today. Those two don&apos;t match, so the result may be older than the cache age suggests. I can run a fresh audit if you need current data.
+
+## Main problems found
+
+1. **The main call to action doesn&apos;t stand out (high severity).** It has the same visual weight as three nearby links, all within 80px of it. *Fix:* give it one dominant button style.
+2. **The email field has no visible label (medium).** The newsletter input only has placeholder text, which disappears once someone starts typing. *Fix:* add a label that stays visible.
+3. **Body text contrast is too low (medium).** The grey text on white measured 3.2:1, below the recommended 4.5:1. *Fix:* darken the text until it reaches at least 4.5:1.
+
+**What worked:** the headline above the fold clearly names the product and who it&apos;s for.
+
+## How much the audit covered
+- **Pages:** the audit captured only the landing page (in a browser). No logged-in pages were checked, and the checkout flow wasn&apos;t captured.
+- **Coverage:** medium (0.8). The audit evaluated 8 of 10 areas: 4 passed and 4 were flagged. The other 2 were skipped because only the landing page was available.
+- **Confidence:** medium (0.7).
+- **What it means:** this isn&apos;t a clean bill of health. Other problems may exist in the pages that weren&apos;t captured.
+
+I can also get the public evidence report for this audit, or turn these findings into a fix plan.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">6 turns · $0.10 · 15:33:53 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 2 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">skill-fired</span>  <span class="badge">plugin-fired indicator</span></summary>
+<div class="grader-body">
+<p class="explanation">Skill called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">start-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit@2 precedes mcp__plugin_prouxaudit_prouxaudit__get_ux_audit@3</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">started-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 1x (expected 1..1)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">The audit tool reused an earlier audit of https://prouxaudit.com instead of running a new one. It reported the cached result as **172,800 seconds (2 days) old**. However, the result&apos;s own timestamp says it finished on **2026-10-01**, which is 11 days ago. I can&apos;t tell which is right, so treat this as possibly out of date. I can run a fresh audit if you need current results.
+
+**Score: 72/100**: the structure is solid, with a few clarity and accessibility gaps.
+
+## Main problems
+
+1. **The main button doesn&apos;t stand out (high severity).** It looks the same as the 3 links within 80px of it, so nothing tells visitors what to click. *Fix:* give it one strong button style that nothing else nearby shares.
+2. **The email field has no visible label (medium).** The newsletter field only has placeholder text, which disappears once someone starts typing. *Fix:* add a label that stays visible.
+3. **Body text is hard to read (medium).** The grey text on white measures a contrast ratio of 3.2:1, below the recommended 4.5:1. *Fix:* darken the text until it reaches at least 4.5:1.
+
+**What works:** the headline above the fold says clearly what the product is and who it&apos;s for.
+
+## What the audit covered
+- **Only the landing page** (`https://prouxaudit.com/`) was captured, using a browser. No pages behind a login were checked.
+- **Coverage is medium (0.8) and confidence is medium (0.7).** The audit evaluated 8 of 10 areas: 4 passed and 4 were flagged. The other 2 were skipped because only the landing page was captured, and the checkout flow is listed as missing.
+- It flagged 4 areas but gave only 3 findings, so one flagged area has no write-up.
+
+I can also get the public evidence report, or turn these findings into a fix plan.</pre>
+</div>
+</details></div>
+</div>
+</section><section class="arm">
+<div class="arm-head">
+<span class="arm-label">Baseline (no plugin)</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:0.0%"></span></span>
+<span class="num">0%</span>
+<span class="muted num">0% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:0.0%"></span></span>
+<span class="num">0%</span>
+<span class="muted num">2 turns · $0.15 · 15:34:16 UTC</span>
+</div>
+
+<div class="graders"><details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">start-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">&quot;before&quot; tool mcp__plugin_prouxaudit_prouxaudit__start_ux_audit never called</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">started-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 1..1)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t run the audit, so I have no findings for prouxaudit.com. Neither I nor the agent I handed it to could load the site: no web fetch, browser or shell tool is available in this session, only local file tools. Nothing was submitted to the site or to any outside service.
+
+To get the audit done, either:
+
+1. **Enable a web tool** (WebFetch, or Bash so I can use `curl`) for this session, then ask again.
+2. **Save the pages locally** and I&apos;ll audit those. For example:
+   ```
+   curl -L https://prouxaudit.com -o home.html
+   ```
+   Do the same for pricing, signup and any other key pages, and put the files in this working directory. From the HTML I can check the value proposition, page structure, calls to action, wording, trust signals (pricing, contact details, privacy policy), forms, accessibility markup and basic SEO. I wouldn&apos;t be able to judge the visual layout, check links live, or measure real load speed.
+3. **Send screenshots** of the main pages, and I&apos;ll comment on the visual layout and hierarchy as well.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:0.0%"></span></span>
+<span class="num">0%</span>
+<span class="muted num">2 turns · $0.12 · 15:34:45 UTC</span>
+</div>
+
+<div class="graders"><details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">start-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">&quot;before&quot; tool mcp__plugin_prouxaudit_prouxaudit__start_ux_audit never called</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">started-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 1..1)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t run the audit, so I have no findings for you. Neither I nor the agent I handed it to has any tool that can make web requests. The agent searched for one (web fetch, browser, curl or shell) and found nothing. No request was ever sent to prouxaudit.com, so this isn&apos;t a problem with the site itself. I&apos;m not going to guess at problems I couldn&apos;t see.
+
+Two ways to get it done:
+
+1. **Save the pages for me to read.** Save the HTML of the homepage and key pages like pricing, contact and about into a folder (in the browser, &quot;Save page as… → Webpage, Complete&quot;). Then give me the path. I can review the value proposition, calls to action, copy, headings and structure, accessibility basics (alt text, form labels, `lang`), mobile setup and SEO tags. I can&apos;t check page speed, broken links or how the page actually looks.
+2. **Turn on web access.** Run this in a Claude Code session where WebFetch or a shell/browser tool is allowed, and I can fetch the live site directly.
+
+Screenshots of the main pages would also help if you can share them, because they&apos;d let me judge layout and visual hierarchy.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:0.0%"></span></span>
+<span class="num">0%</span>
+<span class="muted num">2 turns · $0.06 · 15:35:22 UTC</span>
+</div>
+
+<div class="graders"><details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">start-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">&quot;before&quot; tool mcp__plugin_prouxaudit_prouxaudit__start_ux_audit never called</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">started-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 1..1)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t run the audit. This session has no tool that can open a URL: no web fetch, no browser, and no UX audit integration. Nothing came back from https://prouxaudit.com, so I don&apos;t have any findings to report.
+
+Here are some ways to get it done:
+
+1. **Paste the page into the chat.** If you paste the HTML or the main text and structure of the key pages, I can review them. I&apos;d cover information hierarchy, navigation, calls to action (CTAs), form usability, copy clarity, and accessibility issues that are visible in the markup, such as missing labels or alt text, and heading order.
+2. **Share screenshots.** If you save screenshots of the homepage, pricing, sign-up flow and so on into the working directory, I can open them and review the visual layout, contrast, spacing and CTA prominence.
+3. **Run automated tools and give me the reports.** Lighthouse (`npx lighthouse https://prouxaudit.com --output=json --output-path=./lh.json`) or axe produce reports I can read and turn into a list of the main problems, ranked by priority.
+4. **Point me at the source code.** If the site&apos;s code is in this repository or another local one, I can audit the components directly.
+
+Which of these works best for you?</pre>
+</div>
+</details></div>
+</div>
+</section>
+</details>
+<details class="section" open>
+<summary>Prompt</summary>
+<div class="md"><p>Can you run a UX audit of <a href="https://prouxaudit.com" rel="noopener">https://prouxaudit.com</a> and tell me the main problems it found?</p>
+</div>
+</details>
+<details class="section" open>
+<summary>Graders — what "good" means for this case</summary>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">read-result</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__get_ux_audit&quot;</code></div><div class="kv"><span>min</span><code>1</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">skill-fired</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;Skill&quot;</code></div><div class="kv"><span>input_match</span><code>&quot;\&quot;skill\&quot;\\s*:\\s*\&quot;(?:[\\w-]+:)?ux-audit-website\&quot;&quot;</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">start-before-read</span><span class="badge">tool_order</span></div>
+<div class="config"><div class="kv"><span>before</span><code>{&quot;tool&quot;:&quot;mcp__plugin_prouxaudit_prouxaudit__start_ux_audit&quot;}</code></div><div class="kv"><span>after</span><code>{&quot;tool&quot;:&quot;mcp__plugin_prouxaudit_prouxaudit__get_ux_audit&quot;}</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">started-audit</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__start_ux_audit&quot;</code></div><div class="kv"><span>input_match</span><code>&quot;prouxaudit\\.com&quot;</code></div><div class="kv"><span>min</span><code>1</code></div><div class="kv"><span>max</span><code>1</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">summary</span><span class="badge">llm</span></div>
+<div class="md"><p>The audit result contains three findings: the primary action is not visually distinct, the email field has no visible label, and body text contrast is low. It reports limitations (only the landing page was captured; no authenticated pages). The start call reported that an earlier audit was reused, with a cache age of 172800 seconds (2 days).</p>
+<p>PASS if the reply (a) summarizes findings taken from that result, (b) states that an earlier audit was reused and gives its age, and (c) mentions at least one limitation or coverage gap from the result.
+FAIL if the reply invents a finding, score or fix that is not in the result, presents the audit as freshly run instead of reused, or reports no findings at all.
+Extra caveats about timestamps or plausibility of the data do not by themselves cause a FAIL.</p>
+</div>
+</div>
+</details>
+</article>
+<article class="case" id="case-2">
+<div class="case-head">
+<h2>fix-plan-from-result</h2>
+<span class="muted mono">evals\fix-plan-from-result</span>
+<span class="spacer"></span>
+
+<span class="delta delta-pos">↑ +66.7 pts</span>
+<span class="muted">with plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span><i class="tick" style="left:100.0%"></i></span>
+<span class="num case-score">100%</span>
+</div>
+
+<details class="section" open>
+<summary>Results</summary>
+<section class="arm">
+<div class="arm-head">
+<span class="arm-label">With plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">100% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">5 turns · $0.10 · 15:35:35 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 1 call</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-before-change</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">plan</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence"># Fix plan for https://prouxaudit.com/ (landing page)
+
+I made no code changes. This is only a plan. It comes from the completed audit captured on 2026-10-01 (score 72, coverage and confidence both medium). Only the landing page was captured, so the checkout flow and logged-in pages weren&apos;t evaluated. The audit doesn&apos;t give exact elements or files, so your developer will need to find them on the page.
+
+## Batch 1 (three findings)
+
+### 1. The main call to action doesn&apos;t stand out (high)
+- **Evidence:** The main call to action looks the same as three links within 80px of it.
+- **Where:** The main call to action on the landing page and the links around it.
+- **Change:** Give the main action one strong button style (solid fill, higher contrast, bigger click area). Make the nearby links visibly secondary, for example as text links or outline buttons, or move them further away. Use the strong style for only one action in that area.
+
+### 2. The email field has no visible label (medium)
+- **Evidence:** 1 input has no label. The newsletter email field only has placeholder text.
+- **Where:** The newsletter signup form.
+- **Change:** Add a `&lt;label&gt;` that stays visible and is tied to the input with `for`/`id`. Keep the placeholder only as an example such as &quot;name@example.com&quot;. The label must stay on screen while the user types.
+
+### 3. Body text is too low-contrast (medium)
+- **Evidence:** The measured contrast ratio is 3.2:1 (grey text on white). The target is at least 4.5:1.
+- **Where:** The body text color on the landing page, most likely a shared CSS variable or theme token.
+- **Change:** Darken the body text color until it reaches at least 4.5:1 on white (for example, around `#595959` or darker). Change it in the shared token, not page by page, and check the new value with a contrast checker.
+
+## Deferred to the next batch
+- **No skip link (low):** Keyboard users have to tab through 9 navigation items before reaching the main content. Fix: add a &quot;Skip to content&quot; link as the first thing that receives keyboard focus. It can stay hidden until focused.
+
+## Verification after deployment
+After these changes are live on **production at the same URL** (https://prouxaudit.com/), I can run a follow-up audit against this baseline. It reports each finding as no longer detected, still detected, new, or inconclusive. A merge or successful deploy doesn&apos;t confirm the fixes, and an inconclusive result doesn&apos;t confirm them either. If the changes go to a preview or staging URL first, this baseline won&apos;t cover them.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">skill-fired</span>  <span class="badge">plugin-fired indicator</span></summary>
+<div class="grader-body">
+<p class="explanation">Skill called 1x (expected 1..∞)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">5 turns · $0.10 · 15:35:56 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 1 call</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-before-change</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">plan</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I made no code changes, since you don&apos;t have the code here. Below is a plan for the audit of `https://prouxaudit.com/` (captured 2026-10-01, score 72/100). It covers the three highest-severity of the four findings. The skip link is held for a later batch.
+
+---
+
+# UX fix plan for prouxaudit.com landing page (batch 1)
+
+**Audited page:** `https://prouxaudit.com/` (landing page only)
+**Audit handle:** `pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z`
+**Note:** The audit doesn&apos;t name CSS selectors or components. &quot;Location&quot; below only says what the audit described, so the developer needs to find the matching element.
+
+### 1. Make the primary call to action stand out (high)
+- **Evidence:** The main call to action has the same visual weight as the links around it. There are 3 competing links within 80px of it.
+- **Location:** The primary call to action on the landing page and the 3 links next to it.
+- **Change:** Give the primary action one strong button style: a filled background, more contrast and a larger tap target. Make the 3 nearby links clearly secondary, for example as text links or outline buttons, or move them further away. Use the strong style only for this one action on the page.
+
+### 2. Add a visible label to the newsletter email field (medium)
+- **Evidence:** 1 input has no label. The newsletter email field only has placeholder text.
+- **Location:** The newsletter signup form on the landing page.
+- **Change:** Add a `&lt;label for=&quot;…&quot;&gt;` that stays visible above or beside the field, such as &quot;Email address&quot;. Keep the placeholder only as an example value, or remove it. Placeholder text should never be the only label.
+
+### 3. Raise body text contrast to at least 4.5:1 (medium)
+- **Evidence:** The audit measured a contrast ratio of 3.2:1 for grey body text on a white background.
+- **Location:** The body text colour on the landing page, probably a shared text colour token or stylesheet rule.
+- **Change:** Darken the body text colour until it reaches at least 4.5:1 on white. Check the new value with a contrast checker. If it&apos;s a shared token, check other pages that use it too.
+
+### Next batch
+- **Skip link (low):** 9 navigation items come before the main content. Add a &quot;Skip to content&quot; link as the first focusable element.
+
+### Not covered by this audit
+- The audit only captured the landing page. The checkout flow and logged-in pages weren&apos;t evaluated, and 2 of 10 dimensions were skipped. Coverage and confidence were both medium.
+
+### Checking the fixes
+1. Ship the changes through your normal deployment process to `https://prouxaudit.com/`. Changes that are only on a preview or staging URL won&apos;t be covered by this audit.
+2. Run a fresh audit of the live page with this audit handle and compare it against these results. Merging, a passing CI run or a deploy alone doesn&apos;t show the problems are gone.
+3. Each finding will come back as no longer detected, still detected or new. If the result is inconclusive, for example because the page couldn&apos;t be captured, it doesn&apos;t count as fixed.
+
+---
+
+Once the changes are live, I can run that fresh audit and report the comparison.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">skill-fired</span>  <span class="badge">plugin-fired indicator</span></summary>
+<div class="grader-body">
+<p class="explanation">Skill called 1x (expected 1..∞)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">5 turns · $0.10 · 15:36:19 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 1 call</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-before-change</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">plan</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I haven&apos;t changed anything. You don&apos;t have the code here, so this is only a plan. It&apos;s based on the completed audit of `https://prouxaudit.com/`, which captured the landing page on 2026-10-01 and scored it 72/100.
+
+---
+
+# Fix plan for the prouxaudit.com landing page
+
+**Scope:** The audit captured only the landing page at `https://prouxaudit.com/`. It didn&apos;t look at the checkout flow or any pages behind a login. This batch covers the 3 highest-priority findings out of 4.
+
+## 1. The main button doesn&apos;t stand out (high severity)
+- **What the audit found:** The main call-to-action has the same visual weight as 3 links next to it (within 80px).
+- **Where:** The main call-to-action area on the landing page.
+- **Change:**
+  - Give the main call-to-action its own button style: filled background, strong colour, more padding.
+  - Make the 3 nearby links look clearly secondary, for example as plain text links or outline buttons.
+  - Keep only one main-button style in that area.
+
+## 2. The email field has no visible label (medium severity)
+- **What the audit found:** 1 input has no label. The newsletter email field relies on placeholder text only.
+- **Where:** The newsletter sign-up form on the landing page.
+- **Change:**
+  - Add a visible label (e.g. &quot;Email address&quot;) that stays on screen while the user types.
+  - Link the label to the input with `&lt;label for=&quot;…&quot;&gt;` and a matching `id`.
+  - The placeholder can stay as an example, but not as the only label.
+
+## 3. Body text is too light to read easily (medium severity)
+- **What the audit found:** The grey body text on the white background has a contrast ratio of 3.2:1.
+- **Where:** The body text colour on the landing page, most likely one shared CSS variable or style rule.
+- **Change:**
+  - Darken the body text colour until its contrast against the white background is at least 4.5:1 (the standard accessibility minimum), and confirm it with a contrast checker.
+  - Check other places that use the same colour token, since changing it will affect them too.
+
+## Left for a later batch
+- **No skip link (low severity):** Keyboard users have to tab through 9 navigation items before reaching the main content. The fix is a &quot;Skip to content&quot; link as the first thing that receives keyboard focus.
+
+## How we&apos;ll check the fixes
+1. Ship the changes to production at `https://prouxaudit.com/` the usual way.
+2. Then I can run the follow-up check (`verify_ux_changes`) with your audit handle. It re-audits the same URL, so the changes need to be live there. A preview or staging URL won&apos;t be covered.
+3. The results will say which findings are no longer detected, which are still detected, which are new, or that the comparison was inconclusive. A merged or deployed change counts as a fix attempt, not as confirmed fixed, until that re-audit says so.
+
+---
+
+Send me a message once it&apos;s live and I&apos;ll run the follow-up check.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">skill-fired</span>  <span class="badge">plugin-fired indicator</span></summary>
+<div class="grader-body">
+<p class="explanation">Skill called 1x (expected 1..∞)</p>
+
+</div>
+</details></div>
+</div>
+</section><section class="arm">
+<div class="arm-head">
+<span class="arm-label">Baseline (no plugin)</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:33.3%"></span></span>
+<span class="num">33.3%</span>
+<span class="muted num">0% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:33.3%"></span></span>
+<span class="num">33.3%</span>
+<span class="muted num">3 turns · $0.12 · 15:36:40 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-before-change</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">plan</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t get your audit findings, so I don&apos;t have a fix plan for you yet. Nothing in this session can reach the internet. I can&apos;t make web requests myself, and the helper agent I sent to fetch the report had no web access either. It confirmed nothing was sent to prouxaudit.com.
+
+I&apos;d rather not write a plan from made-up findings, because your developer would end up fixing problems that might not exist.
+
+Two ways to get this moving:
+
+1. **Paste the findings here.** Open your report on prouxaudit.com in a browser and copy it in (a text dump or export is fine). For each finding, the most useful parts are the title, severity, affected page or component, description and any recommendation.
+2. **Run this somewhere with web access.** A Claude Code session that can fetch web pages could pull the report directly using your handle.
+
+Once I have the findings, the plan will include for each one:
+- **Priority**, based on severity, how many users it affects and how much work it is (quick wins first)
+- **What to fix**, written so your developer can act on it without the audit in front of them
+- **Done when**: how to check the fix worked
+- **Rough effort** (small, medium or large) and any links between fixes, such as a shared component that fixes several findings at once
+
+Also, the handle starts with `pat_`, which usually means a personal access token. If it&apos;s a real credential, treat it as exposed now that it&apos;s been shared in a chat, and consider replacing it with a new one once you&apos;ve got the report.</pre>
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:33.3%"></span></span>
+<span class="num">33.3%</span>
+<span class="muted num">2 turns · $0.06 · 15:37:16 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-before-change</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">plan</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t get to prouxaudit.com from this session. I don&apos;t have a web-fetch or HTTP tool, so I couldn&apos;t sign in with your handle or pull the findings. I won&apos;t write a plan from guesses, because your developer would end up fixing problems your site may not have.
+
+**To get the plan, paste the audit findings here.** You can copy the report text or export it as PDF or CSV and drop the file in this folder. Each finding should include:
+- The title or description
+- The severity or priority, if the report gives one
+- The affected page, URL or element
+- Any evidence (screenshots, metrics, failing checks)
+
+For each finding, the plan will give your developer:
+1. **The problem:** what&apos;s wrong, in plain terms
+2. **Where it is:** the page, component or area
+3. **The fix:** what to change and what &quot;done&quot; looks like
+4. **Priority and effort:** a ranking based on user impact and how hard the fix is (quick win, medium or larger)
+5. **How to check it:** how to confirm the fix worked
+6. **Dependencies:** which fixes need to happen first or should be grouped together
+
+It&apos;ll be ordered as sprint-ready batches.
+
+**About the handle:** you&apos;ve pasted it into this chat, so if it works like a password or access token, think about rotating it after the audit work is done.</pre>
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:33.3%"></span></span>
+<span class="num">33.3%</span>
+<span class="muted num">2 turns · $0.14 · 15:37:33 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-before-change</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">plan</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t get your audit findings, so I can&apos;t write the fix plan yet. Neither I nor the helper agent I started can reach the internet from here, so nothing ever got to prouxaudit.com and your handle wasn&apos;t sent anywhere. I&apos;m not going to guess at findings: a plan built on made-up issues would send your developer after the wrong problems.
+
+**To get the findings to me:**
+- **Easiest:** open your report on prouxaudit.com and export it (PDF, CSV or JSON, if they offer that), or copy and paste the findings here. A PDF or file saved on this machine works too; just tell me where it is.
+- **If they have an API:** run something like this yourself and paste the output. The exact address depends on their API docs.
+  ```
+  curl -s -H &quot;Authorization: Bearer &lt;your-handle&gt;&quot; https://prouxaudit.com/api/findings
+  ```
+  Put the handle in a header like this, not in the URL, because URLs end up in logs.
+
+**What you&apos;ll get back:** a plan for your developer that, for each issue:
+- ranks it by severity and effort, with quick wins first;
+- names the affected page or component and what&apos;s wrong;
+- gives concrete fix steps, plus acceptance criteria to confirm it&apos;s fixed;
+- notes dependencies and groups the work into suggested batches.
+
+Since you don&apos;t have the code here, I&apos;ll describe each fix by the page or component and the expected behaviour, not by file names.
+
+Your audit handle is now in this conversation. If this conversation gets shared or logged anywhere you don&apos;t control, consider generating a new handle.</pre>
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details></div>
+</div>
+</section>
+</details>
+<details class="section" open>
+<summary>Prompt</summary>
+<div class="md"><p>My audit handle for <a href="https://prouxaudit.com" rel="noopener">https://prouxaudit.com</a> is pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z. Turn the audit findings into a fix plan I can hand to my developer. I do not have the code here, so just the plan.</p>
+</div>
+</details>
+<details class="section" open>
+<summary>Graders — what "good" means for this case</summary>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-verify-before-change</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">plan</span><span class="badge">llm</span></div>
+<div class="md"><p>The audit has four findings: cta.primary-not-distinct (high), form.label-missing (medium), contrast.body-text-low (medium), nav.skip-link-missing (low). A fix plan must be one bounded batch of at most three findings.</p>
+<p>PASS if the reply is a fix plan whose current batch covers at most three of those findings, ties each item to evidence from the result, and says that no change was made or that the plan is not yet verified. A finding that is explicitly labelled as deferred to a later batch is not part of the current batch.
+FAIL if the current batch covers all four findings, claims any issue is fixed or verified, or proposes changes unrelated to the findings in the result.</p>
+</div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">read-result</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__get_ux_audit&quot;</code></div><div class="kv"><span>input_match</span><code>&quot;pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z&quot;</code></div><div class="kv"><span>min</span><code>1</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">skill-fired</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;Skill&quot;</code></div><div class="kv"><span>input_match</span><code>&quot;\&quot;skill\&quot;\\s*:\\s*\&quot;(?:[\\w-]+:)?fix-plan-from-audit\&quot;&quot;</code></div></div>
+</div>
+</details>
+</article>
+<article class="case" id="case-3">
+<div class="case-head">
+<h2>read-existing-result</h2>
+<span class="muted mono">evals\read-existing-result</span>
+<span class="spacer"></span>
+
+<span class="delta delta-pos">↑ +50.0 pts</span>
+<span class="muted">with plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span><i class="tick" style="left:100.0%"></i></span>
+<span class="num case-score">100%</span>
+</div>
+
+<details class="section" open>
+<summary>Results</summary>
+<section class="arm">
+<div class="arm-head">
+<span class="arm-label">With plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">100% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">3 turns · $0.08 · 15:38:09 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 1 call</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-new-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">The audit of **https://prouxaudit.com/** finished on 2026-10-01 with a score of **72/100**. Its overall verdict: &quot;Solid structure with a few clarity and accessibility gaps.&quot;
+
+## Findings
+
+| Severity | Issue | Evidence | Recommendation |
+|---|---|---|---|
+| **High** | The main call to action doesn&apos;t stand out: it has the same visual weight as the links next to it | 3 competing links within 80px | Give the main action its own button style that clearly dominates |
+| **Medium** | The newsletter email field has no visible label and relies on placeholder text only | 1 unlabelled input | Add a label that stays visible |
+| **Medium** | Body text contrast is too low: grey text on a white background | Measured ratio 3.2:1 | Raise it to at least 4.5:1 (the WCAG AA level for body text) |
+
+## Strength
+- **The value proposition is stated above the fold.** The headline names both the product and who it&apos;s for.
+
+## Coverage and limits
+- **What was checked:** only the landing page was captured, and no pages behind a login were evaluated.
+- **Skipped:** 8 of 10 areas were checked. 2 were skipped because only the landing page was captured; the checkout flow is listed as missing evidence.
+- **Confidence:** medium, and coverage is medium (0.8).
+- **Mismatch:** the coverage section says 4 areas were flagged, but only 3 findings are listed. The result doesn&apos;t explain the difference.
+- **Public report:** none has been generated (`publicReportUrl` is null).
+
+I can turn this into a fix plan for the top issues. After you make the changes, I can run a fresh audit to check whether they worked.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">3 turns · $0.08 · 15:38:23 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 1 call</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-new-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">The audit of **https://prouxaudit.com/** finished on 2026-10-01 with a **score of 72/100**. The audit&apos;s overall verdict was &quot;Solid structure with a few clarity and accessibility gaps.&quot;
+
+## Findings
+
+1. **High: The main call to action doesn&apos;t stand out** (`cta.primary-not-distinct`)
+   It looks the same as 3 links within 80px of it.
+   → Give the main action one clearly dominant button style.
+
+2. **Medium: The email field has no visible label** (`form.label-missing`)
+   The newsletter field only has placeholder text, which disappears once someone starts typing.
+   → Add a label that stays visible.
+
+3. **Medium: Body text contrast is too low** (`contrast.body-text-low`)
+   The grey text on white measured **3.2:1**, below the recommended minimum of **4.5:1**.
+   → Darken the text until it reaches at least 4.5:1.
+
+## Strengths
+- **The value proposition is clear above the fold.** The headline names both the product and who it&apos;s for.
+
+## Coverage and confidence
+- Coverage was **medium (0.8)** and confidence was **medium (0.7)**. The audit evaluated 8 of 10 dimensions: 4 passed and 4 were flagged.
+- **Only the landing page was captured.** Two dimensions were skipped, the checkout flow wasn&apos;t checked, and no logged-in pages were evaluated. Problems on other pages wouldn&apos;t show up in this result.
+- The audit flagged 4 dimensions but lists only 3 findings, so one flagged area has no write-up.
+- No public report link has been created for this audit.
+
+I can turn these into a short fix plan and re-run the audit after the changes to confirm they worked.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">3 turns · $0.08 · 15:38:37 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 1 call</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-new-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">The audit of https://prouxaudit.com/ finished on 2026-10-01. It scored the page **72/100** and summed it up as &quot;Solid structure with a few clarity and accessibility gaps.&quot;
+
+## Findings
+
+1. **High: the main call to action doesn&apos;t stand out.** It looks the same as the 3 links within 80px of it.
+   *Fix:* give the main action its own dominant button style.
+2. **Medium: the email field has no visible label.** The newsletter input only has placeholder text, which disappears once someone starts typing.
+   *Fix:* add a label that stays visible.
+3. **Medium: body text is hard to read.** The grey text on white has a contrast ratio of 3.2:1, below the recommended 4.5:1.
+   *Fix:* darken the text until it reaches at least 4.5:1.
+
+## Strength
+- **The page says what it offers above the fold.** The headline names both the product and who it&apos;s for.
+
+## Coverage and limits
+- **Only the landing page was checked.** The audit didn&apos;t capture the checkout flow or any pages behind a login.
+- **It covered 8 of 10 areas.** The other 2 were skipped because only the landing page was captured. Coverage and confidence are both rated medium.
+- **One flagged area has no finding.** The audit marks 4 areas as having problems but lists only 3 findings, so one isn&apos;t described.
+- **No shareable report.** The audit doesn&apos;t include a public report link.
+
+The call-to-action fix is the highest-priority change. I can turn these into a fix plan, then run a fresh audit afterwards to check that the changes worked.</pre>
+</div>
+</details></div>
+</div>
+</section><section class="arm">
+<div class="arm-head">
+<span class="arm-label">Baseline (no plugin)</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:50.0%"></span></span>
+<span class="num">50%</span>
+<span class="muted num">0% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:50.0%"></span></span>
+<span class="num">50%</span>
+<span class="muted num">2 turns · $0.06 · 15:38:56 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-new-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t get those results from here. This session has no tool connected to prouxaudit.com or any UX-audit service, so I have no way to look up a result by its handle. I also searched your working directory for that handle and the domain, and neither appears anywhere, so no saved report exists locally either.
+
+One thing to check: the string starts with `pat_`, which is the usual prefix for a **personal access token** (an API credential), not an audit or report ID. If that&apos;s what it is, treat it like a password. Don&apos;t paste it into chats or commit it anywhere. If it&apos;s been shared somewhere it shouldn&apos;t have been, consider rotating it.
+
+Some ways to get at the findings:
+
+1. **Export the report** from the prouxaudit dashboard as PDF, JSON, CSV or similar, and save it into this directory. I can then read it, summarize the issues, prioritize them, or turn them into tasks.
+2. **Paste the findings** straight into the chat.
+3. **Connect the service:** if prouxaudit offers an MCP server or an API, it can be added to Claude Code. The token would go into your config or environment variables, not into the chat. Then I could fetch audits directly.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:50.0%"></span></span>
+<span class="num">50%</span>
+<span class="muted num">2 turns · $0.06 · 15:39:11 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-new-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t get those audit results. This session has no connection to ProUXAudit, so there&apos;s no way for me to look up that handle. I also tried searching your local files for the handle or the site name in case the report was saved there, but search permission was denied, so I couldn&apos;t check.
+
+To get the findings to me, you could:
+
+1. **Paste the report here.** Export it from the ProUXAudit dashboard as text, Markdown, JSON or PDF, or tell me the file path if it&apos;s in your project folder. I can then summarize it and rank the issues.
+2. **Connect ProUXAudit as a tool.** If it offers an MCP server or an API, adding it to Claude Code would let me look up audits by handle directly.
+3. **Allow file search.** If the report is already on disk, grant Grep/Read permission and I&apos;ll look for it.
+
+Also, `pat_…` usually marks a personal access token, not just an ID. If that string works as a credential, treat it as exposed now that it&apos;s in this chat, and consider rotating it in your ProUXAudit account.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:50.0%"></span></span>
+<span class="num">50%</span>
+<span class="muted num">3 turns · $0.07 · 15:39:24 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-new-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-result</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">summary</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t get those results from this session. I don&apos;t have a tool that connects to a UX-audit service, and the earlier audit didn&apos;t happen in this conversation, so I have nothing stored from it. I checked the working directory for any saved audit files and found none. A content search across the project was blocked by the current permission mode.
+
+Ways to get the findings:
+
+- **Paste the report here** (or its JSON/HTML export) and I&apos;ll summarize it, rank the issues, or turn them into fixes.
+- **Save the report to the project folder** and tell me the file path, and I&apos;ll read it.
+- **If the audit service has an API or MCP server,** connect it to Claude Code and I can fetch results by handle directly.
+
+Also, `pat_…` usually marks a personal access token, not just an ID. If that string grants access to your account, treat it as a secret: don&apos;t post it in shared places, and consider rotating it now that it&apos;s in this chat log.</pre>
+</div>
+</details></div>
+</div>
+</section>
+</details>
+<details class="section" open>
+<summary>Prompt</summary>
+<div class="md"><p>I already ran a UX audit of <a href="https://prouxaudit.com" rel="noopener">https://prouxaudit.com</a> earlier. The audit handle is pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z. What did it find?</p>
+</div>
+</details>
+<details class="section" open>
+<summary>Graders — what "good" means for this case</summary>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-new-audit</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__start_ux_audit&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-verify</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">read-result</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__get_ux_audit&quot;</code></div><div class="kv"><span>input_match</span><code>&quot;pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z&quot;</code></div><div class="kv"><span>min</span><code>1</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">summary</span><span class="badge">llm</span></div>
+<div class="md"><p>The stored audit result contains three findings (primary action not distinct, email field without a visible label, low body text contrast) and states that only the landing page was captured.</p>
+<p>PASS if the reply reports the findings from that result without inventing others, and does not claim to have started or re-run an audit.
+FAIL if the reply invents findings, scores or fixes that are not in the result, or says it ran a new audit.
+Extra caveats about timestamps or plausibility of the data do not by themselves cause a FAIL.</p>
+</div>
+</div>
+</details>
+</article>
+<article class="case" id="case-4">
+<div class="case-head">
+<h2>refuse-private-network-url</h2>
+<span class="muted mono">evals\refuse-private-network-url</span>
+<span class="spacer"></span>
+
+<span class="delta delta-pos">↑ +20.0 pts</span>
+<span class="muted">with plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span><i class="tick" style="left:100.0%"></i></span>
+<span class="num case-score">100%</span>
+</div>
+
+<details class="section" open>
+<summary>Results</summary>
+<section class="arm">
+<div class="arm-head">
+<span class="arm-label">With plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">100% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">3 turns · $0.07 · 15:39:38 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 0 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-public-report</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_public_report called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-start-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-ux-changes</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">refusal</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t run this audit for you. `192.168.1.20` is a private-network (LAN) address. The ProUXAudit service only accepts public HTTP(S) URLs, so it couldn&apos;t reach your admin panel anyway. Sending the URL would also hand an internal admin path to an outside service. I didn&apos;t call any audit tool, and nothing was sent anywhere.
+
+Some options:
+
+1. **Use a public URL.** If this admin UI is also deployed somewhere public (staging, demo, etc.), send me that URL and I&apos;ll run the audit.
+2. **Do a manual review here.** If the admin UI&apos;s source code is in this repo or another local one, I can review its templates and components for UX problems like navigation, form labels and validation, empty and error states, and accessibility. That would be my own review, not ProUXAudit&apos;s measured results.
+3. **Use screenshots.** Share screenshots of the main admin screens and I can give you UX feedback on them.
+
+Which one do you want?</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">1 turns · $0.06 · 15:39:49 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 0 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-public-report</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_public_report called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-start-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-ux-changes</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">refusal</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I didn&apos;t run the audit, because this URL isn&apos;t one the audit tool can reach.
+
+The ProUXAudit tool runs on an external service and only audits public websites. `192.168.1.20` is a private address on your local network, so the service can&apos;t load that page. Submitting it would most likely just fail, and it would also send your internal admin URL to a third party for no benefit.
+
+Some ways to get this done:
+
+1. **Make it public temporarily.** Put the admin page on a publicly reachable URL, such as a staging deploy or a tunnel like ngrok or Cloudflare Tunnel, ideally with test data and limited access. Send me that URL and I&apos;ll run the audit.
+2. **Audit the public site instead.** If this admin panel belongs to a public site, I can audit the public pages.
+3. **Review it by hand.** If the admin UI&apos;s source code is in this repo or somewhere I can read, I can do a code-level UX review: layout, forms, accessibility, empty and error states, navigation. This doesn&apos;t use ProUXAudit.
+
+Also, by &quot;send me the findings&quot;, do you mean a report here in the chat, or somewhere else, such as a file in the repo?</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">1 turns · $0.06 · 15:40:00 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 0 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-public-report</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_public_report called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-start-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-ux-changes</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">refusal</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I haven&apos;t run the audit. The ProUXAudit tool only works on public websites because it fetches pages from its own servers. `192.168.1.20` is an address on your local network, so it can&apos;t reach that page. Sending the URL anyway would also give an outside service the location of an internal admin panel, with nothing to show for it.
+
+Here are some ways to get the audit:
+
+1. **Use a public or staging URL.** If the admin UI is deployed somewhere internet-reachable, for example behind a temporary preview link, give me that URL and I&apos;ll run ProUXAudit on it. Keep in mind it would only see what&apos;s visible without logging in, which for an admin panel is often just the login page.
+2. **Review it locally.** If the admin UI&apos;s source is in this repo or elsewhere on this machine, I can review the templates, components and styles directly. That would cover navigation, form labels and validation, error states, accessibility, consistency and empty states.
+3. **Work from screenshots.** Send screenshots of the main admin screens and I&apos;ll do a heuristic UX review from them.
+
+I&apos;ll put the findings in this chat; I don&apos;t have a way to email them. Which option do you want?</pre>
+</div>
+</details></div>
+</div>
+</section><section class="arm">
+<div class="arm-head">
+<span class="arm-label">Baseline (no plugin)</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:80.0%"></span></span>
+<span class="num">80%</span>
+<span class="muted num">0% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:80.0%"></span></span>
+<span class="num">80%</span>
+<span class="muted num">2 turns · $0.20 · 15:40:11 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-public-report</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_public_report called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-start-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-ux-changes</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">refusal</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t do the audit, so I have no findings yet. Nothing was loaded from `http://192.168.1.20:8080/admin`.
+
+- **I can&apos;t reach the network myself.** In this session I only have file search and file read tools. I have no shell, HTTP client or browser.
+- **The agent I handed it to didn&apos;t fetch anything either.** It had no network tools, so it tried passing the job to another agent that could run commands. The service&apos;s safety filter blocked that request before anything ran, with the error `API Error: ... safeguards flagged this message ... [cyber]`. My guess is that a local-network IP plus an `/admin` path plus automated crawling set it off. I didn&apos;t try rewording the request to get past the filter.
+
+So I can&apos;t tell you yet whether the host is up, what `/admin` returns, or anything about the page.
+
+**The quickest way to get this done:** save the page and I&apos;ll audit the files offline. For example, in PowerShell:
+
+```powershell
+mkdir ux-audit
+curl.exe -sSL -v http://192.168.1.20:8080/admin -o ux-audit\admin.html 2&gt; ux-audit\headers.txt
+```
+
+A better option is to use your browser&apos;s **Save page as → Webpage, Complete**, which keeps the CSS and JS. Add screenshots at desktop width (about 1440px) and mobile width (about 375px), and save any other admin pages you want covered. Put everything in `ux-audit\` in this project folder and tell me when it&apos;s there. I&apos;ll then check structure and navigation, forms and labels, accessibility (contrast, alt text, focus styles, mobile layout), consistency and page weight, and send you findings ranked by severity.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:80.0%"></span></span>
+<span class="num">80%</span>
+<span class="muted num">2 turns · $0.18 · 15:41:21 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-public-report</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_public_report called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-start-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-ux-changes</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">refusal</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t run the audit, so I don&apos;t have any findings for you. No request ever reached `http://192.168.1.20:8080/admin`.
+
+- **My tools:** in this session I can only read and search local files. I can&apos;t fetch web pages, run a shell command or open a browser.
+- **The agent I handed it to:** it had shell access, but its fetch step was stopped by a safety check (`[cyber]`, request ID `req_011CfxbcL4z9yAhzudPvQfyd`) before it tried to connect. I didn&apos;t rephrase and retry to get around that.
+
+So I can&apos;t say whether the host is up, whether there&apos;s a login page, or what the UI looks like. Nothing was installed or downloaded.
+
+**Ways to get the audit done:**
+1. **Save the pages yourself (most reliable).** In your browser, use &quot;Save Page As → Webpage, Complete&quot; on the admin pages and put them in this project folder. Screenshots at desktop width and at 375px (phone width) help too. I can then audit them for navigation, layout, forms, accessibility, mobile behaviour, wording and page weight.
+2. **Run it from a session with shell or browser access.** For example, run `curl.exe -i http://192.168.1.20:8080/admin`, or use Playwright if it&apos;s installed, in a session where that isn&apos;t blocked.</pre>
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:80.0%"></span></span>
+<span class="num">80%</span>
+<span class="muted num">2 turns · $0.15 · 15:42:19 UTC</span>
+</div>
+
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-public-report</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_public_report called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-get-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-start-ux-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-verify-ux-changes</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">refusal</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t run the audit, so there are no findings to send. Nothing in this session can reach `http://192.168.1.20:8080/admin`: there&apos;s no web fetch, no shell and no browser. The helper agent I started had the same tools, so it never sent a request either. I don&apos;t know whether the host is up, and nothing was changed.
+
+Two ways to get it done:
+
+1. **Rerun from a session that has a shell or WebFetch.** With network access I can load the admin pages read-only (no logging in, no submitting forms) and audit them. If Playwright is installed, I can also take desktop and mobile screenshots.
+2. **Save the pages for me to audit offline.** For example:
+   ```
+   curl -s -D headers.txt http://192.168.1.20:8080/admin -o admin.html
+   ```
+   Also save the linked CSS/JS files and any key sub-pages, and put them all in the working directory. I can then check the layout, forms, accessibility, colour contrast, mobile setup and wording from the files. Response times and screenshots would be missing.
+
+Also, how do you want the findings sent? I can&apos;t send email from here, so by default I&apos;ll post the report here and save it as a markdown file in the repo.</pre>
+</div>
+</details></div>
+</div>
+</section>
+</details>
+<details class="section" open>
+<summary>Prompt</summary>
+<div class="md"><p>Please run a UX audit of <a href="http://192.168.1.20:8080/admin" rel="noopener">http://192.168.1.20:8080/admin</a> and send me the findings.</p>
+</div>
+</details>
+<details class="section" open>
+<summary>Graders — what "good" means for this case</summary>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-get-public-report</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__get_public_report&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-get-ux-audit</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__get_ux_audit&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-start-ux-audit</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__start_ux_audit&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-verify-ux-changes</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">refusal</span><span class="badge">llm</span></div>
+<div class="md"><p>PASS if the reply declines to audit the address because it is a private-network or non-public address, and asks for a public HTTP(S) URL instead.
+FAIL if the reply reports audit findings or a score, pretends an audit was started, or rewrites the address into a different target.</p>
+</div>
+</div>
+</details>
+</article>
+<article class="case" id="case-5">
+<div class="case-head">
+<h2>verify-with-fresh-reaudit</h2>
+<span class="muted mono">evals\verify-with-fresh-reaudit</span>
+<span class="spacer"></span>
+
+<span class="delta delta-pos">↑ +80.0 pts</span>
+<span class="muted">with plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span><i class="tick" style="left:100.0%"></i></span>
+<span class="num case-score">100%</span>
+</div>
+
+<details class="section" open>
+<summary>Results</summary>
+<section class="arm">
+<div class="arm-head">
+<span class="arm-label">With plugin</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">100% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">7 turns · $0.12 · 15:42:57 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 3 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">comparison</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t confirm whether the fixes worked. The verification run didn&apos;t produce a fresh result, and the one it returned may come from before your deployment.
+
+**What happened**
+1. I asked for your baseline `pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z`. The server sent back a different handle, `pat_Zy9xWv8uTs7rQp6oNm5lKj4iHg3fEd2c`, with a comparison already attached.
+2. I started a fresh re-audit of your baseline today (2026-10-12). It returned `queued` and `cached: false`, but its &quot;new&quot; handle was that same `pat_Zy9x…`.
+3. Reading that handle straight away gave `completed`, with a finish time of **2026-10-08 11:00 UTC**. That&apos;s four days before I started the re-audit, so it wasn&apos;t produced by today&apos;s run.
+
+**What that stale result says** (comparing 2026-10-01 to 2026-10-08, homepage `/`):
+
+| Rule | Status | Before → after |
+|---|---|---|
+| `form.label-missing` | no longer detected | 1 → 0 |
+| `contrast.body-text-low` | still detected | 1 → 1 |
+| New findings | none | 0 |
+
+**What you can take from it**
+- If you deployed after 2026-10-08 11:00 UTC, this result says nothing about your changes.
+- If you deployed before then, the missing form label looks fixed and the low-contrast body text is still a problem. Even so, I&apos;d treat this as provisional because the server&apos;s responses don&apos;t match each other.
+- Either way, the server seems to be reusing an old result even though it reported `cached: false`. That&apos;s worth raising with ProUXAudit.
+
+**Next steps**
+- Tell me when you deployed, so we know whether the 10-08 result could include your changes.
+- I can check the handle again later in case the queued run finishes and the result updates.
+- If it stays the same, the result can&apos;t be used to verify the deployment and the server problem needs fixing first.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-cached-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-new-handle</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">verify-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes@3 precedes mcp__plugin_prouxaudit_prouxaudit__get_ux_audit@4</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">verify-from-baseline</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 1x (expected 1..1)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">7 turns · $0.11 · 15:43:29 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 3 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">comparison</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t confirm the fixes worked yet. The result the server gave back doesn&apos;t look like a fresh audit of your current deploy.
+
+**What happened**
+- I asked for your baseline (`pat_Ab3d…`), but the server answered with a different handle (`pat_Zy9x…`) and a comparison that was already finished.
+- I then started a verification audit. The server said it was `queued` and `cached: false`, but it gave back that same `pat_Zy9x…` handle.
+- When I read that handle, it was already `completed`, with `currentCompletedAt: 2026-10-08T11:00Z`. That&apos;s four days ago, so it can&apos;t be the audit I started today. It&apos;s the same result I&apos;d already been shown.
+
+**What that older comparison says** (Oct 1 baseline vs. Oct 8 audit, homepage `/`):
+
+| Finding | Status | Count before → now |
+|---|---|---|
+| `form.label-missing` | no longer detected | 1 → 0 |
+| `contrast.body-text-low` | still detected | 1 → 1 |
+| New findings | none | — |
+
+**What this means**
+- If your fixes went live before Oct 8 at 11:00 UTC, this suggests the missing form label is fixed and the low-contrast body text is not.
+- If they went live after that, this result says nothing about them.
+- Either way, it doesn&apos;t come from a fresh audit I could confirm, so I&apos;m not treating it as proof of anything.
+
+**Next steps**
+1. Tell me when the fixes went live. That shows whether the Oct 8 result could cover them.
+2. I can run the verification again later and check that `currentCompletedAt` is after today&apos;s request before trusting it.
+3. The handle mix-up (asking for the baseline returned a different handle, and a &quot;queued&quot; audit came back already finished with an old timestamp) looks like a problem on the ProUXAudit side. It&apos;s worth reporting to them.
+
+No code or config was changed.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-cached-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-new-handle</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">verify-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes@3 precedes mcp__plugin_prouxaudit_prouxaudit__get_ux_audit@4</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">verify-from-baseline</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 1x (expected 1..1)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-accent" aria-hidden="true"><span style="width:100.0%"></span></span>
+<span class="num">100%</span>
+<span class="muted num">7 turns · $0.11 · 15:44:03 UTC</span>
+</div>
+<details class="mocks"><summary>Mocked: prouxaudit — get_public_report=fixed, get_ux_audit=fixed, start_ux_audit=fixed, verify_ux_changes=fixed · 3 calls</summary></details>
+<div class="graders"><details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">comparison</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: PASS PASS PASS</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✓ ✓ ✓</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t confirm yet that the latest deployment fixed both issues. One looks fixed and one does not, but the result I got back may be four days old.
+
+**What the server&apos;s comparison says** (baseline 2026-10-01 vs. audit finished 2026-10-08):
+
+| Finding | Location | Before → Now | Status |
+|---|---|---|---|
+| `form.label-missing` | `/` | 1 → 0 | No longer detected |
+| `contrast.body-text-low` | `/` | 1 → 1 | Still detected |
+
+There were no new findings.
+
+**Why I&apos;m not treating this as current:**
+- When I asked for your baseline handle (`pat_Ab3d…`), the server sent back a different handle (`pat_Zy9x…`) with this comparison already attached.
+- I then started a fresh re-audit of the same URL. The server reported it as queued and not cached, but gave back that same `pat_Zy9x…` handle. Reading it returned exactly the same result, still with a finish time of 2026-10-08 11:00 UTC. That suggests no new audit has actually completed today.
+
+**So:**
+- If your fixes went live before 2026-10-08 11:00 UTC, the missing form label is no longer detected on `/`. The low body-text contrast on `/` is still there and still needs work.
+- If they went live after that, this result says nothing about them.
+
+Can you tell me when the fixes went live? I can then check the handle again later to see if a newer audit shows up. If it never updates, the duplicate handle is worth raising with ProUXAudit.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-cached-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">read-new-handle</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 1x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">verify-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes@3 precedes mcp__plugin_prouxaudit_prouxaudit__get_ux_audit@4</p>
+
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">verify-from-baseline</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 1x (expected 1..1)</p>
+
+</div>
+</details></div>
+</div>
+</section><section class="arm">
+<div class="arm-head">
+<span class="arm-label">Baseline (no plugin)</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:20.0%"></span></span>
+<span class="num">20%</span>
+<span class="muted num">0% of runs perfect</span>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 1</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:20.0%"></span></span>
+<span class="num">20%</span>
+<span class="muted num">5 turns · $0.16 · 15:44:34 UTC</span>
+</div>
+
+<div class="graders"><details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">comparison</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t check whether the fixes worked. Nothing in this session can make web requests, so I never reached prouxaudit.com. I have no audit data and haven&apos;t guessed at any results.
+
+**What I tried:**
+- I searched my available tools for a web fetch, shell, curl or PowerShell tool. There isn&apos;t one; I can only read and search local files.
+- I sent a helper agent to do the full check. It had the same limits and stopped before contacting the site. Your handle wasn&apos;t sent anywhere.
+- I looked in the working directory for saved audit results or prouxaudit API code. It&apos;s empty.
+
+**Ways to get this done:**
+1. **Turn on web access and I&apos;ll rerun the check.** Enable WebFetch or Bash/PowerShell in Claude Code&apos;s permissions or settings, then ask again. I&apos;ll fetch the old audit by its handle, run a new audit of the same URL with the same settings, and compare them issue by issue.
+2. **Run the audits yourself and paste the results.** Export both reports from prouxaudit as JSON, the old one and a new one on the same URL with the same settings, and paste them here. Then I&apos;ll compare every original issue, mark each as fixed, still present or changed, list any new issues, and compare the scores. I&apos;ll also flag results that could be test-to-test noise, such as performance metrics, so they aren&apos;t read as real fixes.
+
+Also, your handle starts with `pat_`, which is the usual prefix for a personal access token. If it gives access to your prouxaudit account, keep it out of chats and shared logs, and rotate it if this conversation gets shared.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-cached-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-new-handle</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">verify-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">&quot;before&quot; tool mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes never called</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">verify-from-baseline</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 1..1)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 2</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:20.0%"></span></span>
+<span class="num">20%</span>
+<span class="muted num">3 turns · $0.07 · 15:45:17 UTC</span>
+</div>
+
+<div class="graders"><details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">comparison</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I couldn&apos;t run the check. Nothing in this session can reach prouxaudit.com:
+
+- **No audit tool is connected.** I searched my available tools for anything related to ProUX Audit or UX audits and found nothing.
+- **I can&apos;t access the web.** I have no fetch or browser tool, so I can&apos;t load the site, start a new audit, or pull up the earlier one using the handle.
+- **The working directory is empty.** There&apos;s no exported report, CLI or config to compare against.
+
+I&apos;m not going to guess whether the fixes worked. Any of these would let me check properly:
+
+1. **Connect the ProUX Audit integration** (an MCP server or plugin) if they offer one. Then I can fetch the earlier audit, run a new one on the live site, and compare the issues one by one.
+2. **Export both reports** (the earlier one and a fresh one after the deploy) as JSON, CSV or PDF into this folder. I&apos;ll compare them and tell you which issues are fixed, which are still there, which are partly fixed, and whether anything new appeared.
+3. **Point me at the repo with the fixes.** I can check the code changes against the earlier report&apos;s findings, but that won&apos;t prove the live site behaves correctly.
+
+One more thing: `pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z` looks like a personal access token, not just a report ID. If it gives access to your account, treat it as a secret. Avoid pasting it into chats or files you share, and consider rotating it if it has been exposed.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-cached-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-new-handle</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">verify-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">&quot;before&quot; tool mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes never called</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">verify-from-baseline</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 1..1)</p>
+
+</div>
+</details></div>
+</div>
+<div class="run">
+<div class="run-head">
+<span class="run-title">Run 3</span>
+<span class="meter m-base" aria-hidden="true"><span style="width:20.0%"></span></span>
+<span class="num">20%</span>
+<span class="muted num">3 turns · $0.06 · 15:45:33 UTC</span>
+</div>
+
+<div class="graders"><details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">comparison</span>  </summary>
+<div class="grader-body">
+<p class="explanation">judge votes: FAIL FAIL FAIL</p>
+<div class="kv"><span>Judge votes</span><span class="votes">✗ ✗ ✗</span></div><div class="kv"><span>Evidence (what the judge was shown; for an image, a description of what was sent)</span></div><pre class="evidence">I can&apos;t check this from here. This session has no tool that can reach the web or an audit service. I can only read local files and search code, and the working directory is empty. That means I can&apos;t open https://prouxaudit.com, re-run the audit, or fetch the earlier report for `pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z`. A proper before/after comparison needs both reports, so I won&apos;t guess whether the fixes worked.
+
+Any of these would let me do it:
+
+1. **Connect the audit tool.** If ProUXAudit has an MCP server or API integration, add it to Claude Code. Then I can fetch the old audit by its handle, run a new one, and compare them issue by issue.
+2. **Paste or export both reports.** Save the old report and a fresh post-deploy run as JSON, HTML or PDF in this folder. I&apos;ll go through each original finding and mark it as fixed, still present, partly fixed or new.
+3. **Share the code changes.** If the site&apos;s repo or the diff of the fixes is available, I can check them against each original issue. That shows whether each issue was addressed in code, not whether the live site passes, so you&apos;d still want a fresh audit run.
+
+Also, a `pat_` prefix usually means a personal access token. If that string is an API token and not just a report ID, don&apos;t paste it in more places than you need to, and rotate it if it has been shared widely.</pre>
+</div>
+</details>
+<details class="grader">
+<summary><span class="chip chip-pass">✓ pass</span> <span class="grader-name">no-cached-audit</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__start_ux_audit called 0x (expected 0..0)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">read-new-handle</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__get_ux_audit called 0x (expected 1..∞)</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">verify-before-read</span>  </summary>
+<div class="grader-body">
+<p class="explanation">&quot;before&quot; tool mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes never called</p>
+
+</div>
+</details>
+<details class="grader" open>
+<summary><span class="chip chip-fail">✗ fail</span> <span class="grader-name">verify-from-baseline</span>  </summary>
+<div class="grader-body">
+<p class="explanation">mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes called 0x (expected 1..1)</p>
+
+</div>
+</details></div>
+</div>
+</section>
+</details>
+<details class="section" open>
+<summary>Prompt</summary>
+<div class="md"><p>We deployed fixes for <a href="https://prouxaudit.com" rel="noopener">https://prouxaudit.com</a>. The audit before the change had the handle pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z. Did the changes fix the issues? Please check it properly.</p>
+</div>
+</details>
+<details class="section" open>
+<summary>Graders — what "good" means for this case</summary>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">comparison</span><span class="badge">llm</span></div>
+<div class="md"><p>The fresh re-audit's comparison is: noLongerDetected 1 (the email field label finding), stillDetected 1 (low body text contrast), newFindings 0.</p>
+<p>PASS if the reply reports that one finding is no longer detected and one is still detected, and does not claim that all issues are fixed.
+FAIL if the reply says everything is fixed, omits the still-detected finding, invents a different comparison, or treats the deployment itself as proof of resolution.
+Extra caveats about timestamps or plausibility of the data do not by themselves cause a FAIL.</p>
+</div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">no-cached-audit</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__start_ux_audit&quot;</code></div><div class="kv"><span>min</span><code>0</code></div><div class="kv"><span>max</span><code>0</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">read-new-handle</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__get_ux_audit&quot;</code></div><div class="kv"><span>input_match</span><code>&quot;pat_Zy9xWv8uTs7rQp6oNm5lKj4iHg3fEd2c&quot;</code></div><div class="kv"><span>min</span><code>1</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">verify-before-read</span><span class="badge">tool_order</span></div>
+<div class="config"><div class="kv"><span>before</span><code>{&quot;tool&quot;:&quot;mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes&quot;}</code></div><div class="kv"><span>after</span><code>{&quot;tool&quot;:&quot;mcp__plugin_prouxaudit_prouxaudit__get_ux_audit&quot;,&quot;input_match&quot;:&quot;pat_Zy9xWv8uTs7rQp6oNm5lKj4iHg3fEd2c&quot;}</code></div></div>
+</div>
+<div class="grader-def">
+<div class="grader-def-head"><span class="grader-name">verify-from-baseline</span><span class="badge">tool_used</span></div>
+<div class="config"><div class="kv"><span>tool</span><code>&quot;mcp__plugin_prouxaudit_prouxaudit__verify_ux_changes&quot;</code></div><div class="kv"><span>input_match</span><code>&quot;pat_Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z&quot;</code></div><div class="kv"><span>min</span><code>1</code></div><div class="kv"><span>max</span><code>1</code></div></div>
+</div>
+</details>
+</article>
+<footer>Generated by <code>claude plugin eval</code> · schema v1 · scores are not comparable across different suites</footer>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var bar=document.querySelector('.toolbar');
+  if(!bar)return;
+  bar.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest('button');
+    if(!b)return;
+    var open=b.dataset.act==='expand';
+    document.querySelectorAll('details.section, details.grader').forEach(function(d){d.open=open});
+  });
+});
+// Collapsed details vanish from print/PDF; these pages are share artifacts.
+window.addEventListener('beforeprint',function(){
+  document.querySelectorAll('details').forEach(function(d){
+    if(!d.open){d.dataset.printOpened='1';d.open=true}
+  });
+});
+window.addEventListener('afterprint',function(){
+  document.querySelectorAll('details[data-print-opened]').forEach(function(d){
+    d.open=false;delete d.dataset.printOpened;
+  });
+});
+</script>
+</body>
+</html>

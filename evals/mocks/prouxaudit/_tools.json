@@ -1,0 +1,84 @@
+{
+  "tools": [
+    {
+      "description": "Start or reuse an evidence-backed discovery UX audit of an explicitly requested public website. Cache reuse and age are disclosed.",
+      "title": "Start UX audit",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "et"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "name": "start_ux_audit"
+    },
+    {
+      "description": "Read the current state or complete public-safe structured result of one audit handle.",
+      "title": "Read UX audit",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "auditHandle"
+        ],
+        "properties": {
+          "auditHandle": {
+            "type": "string",
+            "pattern": "^pat_[A-Za-z0-9_-]{32}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "name": "get_ux_audit"
+    },
+    {
+      "description": "Retrieve the existing evidence-backed public report link for a completed audit.",
+      "title": "Read public report link",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "auditHandle"
+        ],
+        "properties": {
+          "auditHandle": {
+            "type": "string",
+            "pattern": "^pat_[A-Za-z0-9_-]{32}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "name": "get_public_report"
+    },
+    {
+      "description": "Start a fresh audit of the same public URL after changes. Never reuse discovery cache. Read the new handle for a conservative measured comparison; missing or incompatible evidence is inconclusive, not resolution.",
+      "title": "Verify UX changes",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "auditHandle"
+        ],
+        "properties": {
+          "auditHandle": {
+            "type": "string",
+            "pattern": "^pat_[A-Za-z0-9_-]{32}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "name": "verify_ux_changes"
+    }
+  ]
+}
