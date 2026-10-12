@@ -37,6 +37,15 @@ Load the plugin from a local checkout with `claude --plugin-dir <path-to-this-re
 - The plugin has no tool for plan changes or payments and stores no data of its own.
 - The connector can be unavailable (`service_unavailable`); the skills report this rather than inventing a result.
 
+## Evals
+
+`evals/` holds an eval suite for `claude plugin eval`: five cases (audit from a public URL, read an existing result, fix plan from a result, verify changes with a fresh re-audit, refuse a private-network URL). The ProUXAudit connector is replaced by mocks under `evals/mocks/prouxaudit/`, so a run makes no request to prouxaudit.com. Cases use `https://prouxaudit.com` as the audited URL; the refusal case uses a private-network address on purpose, to check that nothing is sent to the connector.
+
+```
+claude plugin eval . --trust-plugin --no-publish
+```
+
+A run makes real model calls (30 agent runs plus judge calls: five cases, three runs per arm, two arms). The latest passing report is committed under `evals/results/`; `aggregate-result.json` there has local paths redacted.
 ## Support
 
 Questions and problem reports: prouxaudit@leisson.eu. Include the tool name and the returned error code, but not an `auditHandle` you want to keep private.
