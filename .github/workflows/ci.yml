@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    # GitHub-hosted runners are blocked by billing; this repo has its own self-hosted runner.
+    runs-on: [self-hosted, Windows, prouxaudit-claude-plugin]
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse every tracked JSON file
+        run: |
+          $files = @(git ls-files -- '*.json')
+          $bad = 0
+          foreach ($f in $files) {
+            try {
+              Get-Content -Raw -LiteralPath $f | ConvertFrom-Json -ErrorAction Stop | Out-Null
+              Write-Host "OK   $f"
+            } catch {
+              Write-Host "FAIL $f : $($_.Exception.Message)"
+              $bad++
+            }
+          }
+          Write-Host "JSON files parsed: $($files.Count), failed: $bad"
+          if ($bad -gt 0) { exit 1 }
+
+      - name: claude plugin validate
+        run: |
+          if (-not (Test-Path -LiteralPath '.claude-plugin/plugin.json')) {
+            Write-Host 'SKIP: no .claude-plugin/plugin.json in this tree, nothing to validate.'
+            exit 0
+          }
+          $claude = Get-Command claude -ErrorAction SilentlyContinue
+          if (-not $claude) {
+            Write-Host 'SKIP: claude CLI is not on this runner''s PATH; plugin validation did not run.'
+            exit 0
+          }
+          Write-Host "Using $($claude.Source)"
+          claude plugin validate .
+          if ($LASTEXITCODE -ne 0) { Write-Host "claude plugin validate failed with exit $LASTEXITCODE"; exit 1 }
+
+      - name: Secret scan (tracked files)
+        run: |
+          $patterns = @(
+            '-----BEGIN [A-Z ]*PRIVATE KEY-----',
+            'gh[pousr]_[A-Za-z0-9]{36}',
+            'github_pat_[A-Za-z0-9_]{22,}',
+            'sk-[A-Za-z0-9_-]{20,}'
+          )
+          $gitArgs = @('grep', '-nIE')
+          foreach ($p in $patterns) { $gitArgs += @('-e', $p) }
+          $hits = @(& git @gitArgs -- .)
+          $code = $LASTEXITCODE
+          if ($code -eq 1) { Write-Host 'Secret scan: no hits.'; exit 0 }
+          if ($code -ne 0) { Write-Host "git grep failed with exit $code"; exit 2 }
+          # Print only path:line so a real secret never lands in the log.
+          foreach ($h in $hits) { $parts = $h -split ':', 3; Write-Host "SECRET PATTERN HIT: $($parts[0]):$($parts[1])" }
+          exit 1
