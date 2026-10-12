@@ -16,7 +16,7 @@ Checked on 2026-10-12 against [Connector pre-submission checklist](https://claud
 | Every tool has `title` and the applicable hint | Pass | `get_ux_audit`, `get_public_report`: `readOnlyHint: true`. `start_ux_audit`, `verify_ux_changes`: `readOnlyHint: false`, `destructiveHint: false` (they create an audit, they modify or delete nothing). claude.ai groups them as read-only and write tools (`assets/screenshot-1-connector.png`) |
 | Tool names ≤ 64 characters | Pass | Longest is `verify_ux_changes` (17) |
 | Narrow, accurate descriptions; no prompt-injection patterns, no promotion | Pass | Descriptions state what each tool does; none instructs Claude to call other tools, fetch instructions or promote a product |
-| Valid calls succeed; errors are actionable | Pass | Live claude.ai run on 2026-10-12: audit of `https://prouxaudit.com` completed (93/100, 20/20 dimensions). Typed error codes: `invalid_target`, `target_not_allowed`, `audit_handle_expired`, `audit_handle_revoked`, `budget_exceeded`, `service_unavailable`; HTTP 429 on network rate limit |
+| Valid calls succeed; errors are actionable | Pass | Live claude.ai run on 2026-10-12: audit of `https://prouxaudit.com` completed (93/100, 20/20 dimensions). Typed error codes: `invalid_target`, `target_not_allowed`, `audit_handle_expired`, `audit_handle_revoked`, `budget_exceeded`, `service_unavailable`; errors are returned as `isError` with the code as text (PROUXAUDIT#342); HTTP 429 on network rate limit |
 | Input validation | Pass | Public HTTP(S) URLs only; localhost, private, link-local, metadata and credential-bearing URLs are refused server-side (SSRF tests in PROUXAUDIT) |
 | Reasonably sized responses | Pass | One structured audit result per handle; queued/running states are compact |
 | No collection of conversation data; no reading of memory, history or files | Pass | Tools receive only `url`, optional `locale` and `auditHandle` |
@@ -27,7 +27,7 @@ Checked on 2026-10-12 against [Connector pre-submission checklist](https://claud
 | Privacy policy covers connector processing | Pass | https://prouxaudit.com/privacy (EN) and https://prouxaudit.com/et/privacy (ET), connector section approved in PROUXAUDIT#247 |
 | Support contact | Pass | prouxaudit@leisson.eu (README "Support") |
 | Tested as a custom connector in Claude | Pass | claude.ai custom connector run on 2026-10-12 (screenshots below) |
-| Tested with MCP Inspector | Partial | Scripted protocol probes against production (`initialize`, `tools/list`, `resources/list`) on 2026-10-12 after PROUXAUDIT#339 and #341 (proof comments on those PRs). MCP Inspector itself was not run; run `npx @modelcontextprotocol/inspector` against the URL before ticking the portal's **Test & launch** confirmation |
+| Tested with MCP Inspector | Pass | MCP Inspector 2.10.1 CLI against production on 2026-10-12 after PROUXAUDIT#342: `tools/list` (four tools, each with `annotations.title`), `resources/list`, `prompts/list`, refusals of private and cloud-metadata URLs (`target_not_allowed`), unknown handle (`audit_not_found`) and a success read; proof comment on PROUXAUDIT#342 |
 
 ## Plugin checklist
 
