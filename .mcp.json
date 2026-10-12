@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "prouxaudit": {
+      "type": "http",
+      "url": "https://prouxaudit.com/api/mcp"
+    }
+  }
+}

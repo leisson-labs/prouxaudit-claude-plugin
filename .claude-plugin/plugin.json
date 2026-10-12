@@ -1,0 +1,10 @@
+{
+  "name": "prouxaudit",
+  "description": "Connects Claude to the ProUXAudit MCP connector for UX audits of public websites and adds skills for reading audit results and planning fixes.",
+  "version": "0.1.0",
+  "author": {
+    "name": "LEISSON OÜ"
+  },
+  "homepage": "https://prouxaudit.com",
+  "repository": "https://github.com/leisson-labs/prouxaudit-claude-plugin"
+}
